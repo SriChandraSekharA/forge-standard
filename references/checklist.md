@@ -85,3 +85,5 @@ Detection guards (non-failing, per `scripts/review.sh` TEST_AWARE block):
 # USER CUSTOM START
 # (add custom checklist items here - preserved across init.sh re-runs)
 # USER CUSTOM END
+
+<!-- docs: 6-axis checklist - correctness/readability/arch/security/performance/test-coverage - severity critical->nitpick gate 8/10 terse L: pattern -->

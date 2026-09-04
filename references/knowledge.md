@@ -55,3 +55,5 @@ Resolved source is cached at `.forge-standard/knowledge.md`. The checklist is ca
 ## Status
 
 Authoritative for Task 3 and later.
+
+<!-- docs: knowledge fallback chain priority AGENTS.md > CONTRIBUTING.md > .github/copilot-instructions.md > docs/agents/issue-tracker.md > Fowler baseline - validated wave 3 -->
