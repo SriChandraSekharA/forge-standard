@@ -1,5 +1,6 @@
 """Scenario C — Regression: deletion persists + skills.sh local validation + ranked report.
 Real npx, real grep qodo, real review.sh/report.sh, no mocks.
+# test: scenario C regression ranked - seeded critical/high/nitpick verifies report.md critical before nitpick ranking + review.json schema
 """
 import subprocess
 import pathlib

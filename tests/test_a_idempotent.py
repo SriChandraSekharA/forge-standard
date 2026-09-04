@@ -1,5 +1,6 @@
 """Scenario A — Happy: first init -> second update (idempotent preserve).
 Real git repos, real bash ./scripts/init.sh, no mocks.
+# test: scenario A idempotent preserve - first init -> second merge preserves CUSTOM + reviews[], history.md sync wc -l matches git log
 """
 import json
 import subprocess

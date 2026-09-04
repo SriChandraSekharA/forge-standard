@@ -1,5 +1,6 @@
 """Scenario D — Stress: concurrent re-init + stale pid cleanup (impeccable pattern).
 Real bash, real kill -0, real pid files.
+# test: scenario D stale pid + learning append - stale pid cleaned, live pid preserved, learning.md monotonic append-only
 """
 import subprocess
 import pathlib

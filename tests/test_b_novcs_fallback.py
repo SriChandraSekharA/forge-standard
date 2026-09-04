@@ -1,5 +1,6 @@
 """Scenario B — Edge: no VCS (hg/none) + missing docs fallback to Fowler.
 Real FS, real git rev-parse branch, no mocks.
+# test: scenario B no-vcs fallback - no git repo -> history.md no-vcs, still creates .forge-standard/ with checklist/knowledge/state
 """
 import subprocess
 import pathlib
