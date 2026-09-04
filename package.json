@@ -20,7 +20,9 @@
     "spec-review",
     "solid-review",
     "quota-free-review",
-    "anvil"
+    "anvil",
+    "owasp",
+    "code-quality"
   ],
   "skills": [
     "forge-standard"
