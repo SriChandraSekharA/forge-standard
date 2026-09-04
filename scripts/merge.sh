@@ -26,7 +26,7 @@ if [ -f "$target_dir/state.json" ]; then
       rm -f "$tmp_merged"
     fi
   else
-    : # jq missing or template missing — cp -n semantics: preserve existing file
+    : # jq missing or template missing - cp -n semantics: preserve existing file
   fi
 else
   if [ -n "$state_template" ] && [ -f "$state_template" ]; then
@@ -50,7 +50,7 @@ if [ -f "$target_dir/checklist.md" ]; then
     sort -u "$tmp_custom" -o "$tmp_custom" 2>/dev/null || true
   fi
   if [ -s "$tmp_custom" ]; then
-    # file exists — never cp blindly; ensure CUSTOM preserved
+    # file exists - never cp blindly; ensure CUSTOM preserved
     if ! grep -q "CUSTOM" "$target_dir/checklist.md" 2>/dev/null; then
       cat "$tmp_custom" >> "$target_dir/checklist.md"
     fi
@@ -71,7 +71,7 @@ else
   echo "no-vcs" > "$target_dir/history.md"
 fi
 
-# learning.md: never truncated — append only, create if missing
+# learning.md: never truncated - append only, create if missing
 if [ ! -f "$target_dir/learning.md" ]; then
   touch "$target_dir/learning.md"
 fi

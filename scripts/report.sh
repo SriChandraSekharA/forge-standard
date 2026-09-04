@@ -83,10 +83,22 @@ extract_line() { f=$(extract_file "$1"); echo "$f" | grep -oE ":[0-9]+" | tr -d 
         sev=$(echo "$raw" | grep -oiE "\[[^]]*/[[:space:]]*(critical|high|medium|low|nitpick)" | grep -oiE "critical|high|medium|low|nitpick" | head -1 | tr '[:upper:]' '[:lower:]' || echo "$sev_low")
         reason=$(echo "$raw" | sed -E 's/.*\[[^]]*\][[:space:]]*//' | sed -E 's/[[:space:]]*->[[:space:]]*.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
         [ -z "$reason" ] && reason="issue at $file"
+        if echo "$reason" | grep -qiE "test coverage|missing test|brittle mock|coverage gap|test deletion"; then
+          if echo "$reason" | grep -qiE "missing test|test deletion"; then
+            if [ "$sev" != "high" ] && [ "$sev" != "critical" ]; then sev="high"; fi
+          elif echo "$reason" | grep -qiE "brittle|coverage gap"; then
+            if [ "$sev" != "medium" ] && [ "$sev" != "high" ] && [ "$sev" != "critical" ]; then sev="medium"; fi
+          fi
+        fi
+        if echo "$reason" | grep -qiE "typo.*test|test.*typo"; then sev="low"; fi
         if ! echo "$reason" | grep -qiE "CWE|OWASP|Fowler"; then case "$sev" in critical) reason="$reason (CWE-89 / OWASP A03: Injection)" ;; high) reason="$reason (CWE-20 / Fowler Long Method)" ;; medium) reason="$reason (Fowler Code Smell)" ;; low) reason="$reason (Fowler Readability)" ;; nitpick) reason="$reason (Fowler Style)" ;; esac; fi
         fix=$(echo "$raw" | sed -n 's/.*->[[:space:]]*//p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
         [ -z "$fix" ] && fix="apply checklist guidance for $sev"
+        if echo "$reason" | grep -qiE "test coverage|missing test|brittle mock|coverage gap"; then
+          if ! echo "$fix" | grep -qi "test"; then fix="$fix - add test for changed code: e.g. tests/test_foo.py covering boundary and failure cases"; fi
+        fi
         prompt="Act as a senior reviewer, fix $sev issue at $file: $reason by $fix"
+        if echo "$reason" | grep -qiE "test coverage|missing test|brittle mock"; then prompt="Act as a senior reviewer, fix $sev test issue at $file: $reason by $fix - add test code covering boundary and failure cases"; fi
         if echo "$sev" | grep -qi "critical"; then prompt="Act as a senior security engineer, fix $sev at $file: $reason by $fix"; fi
         if echo "$sev" | grep -qi "nitpick"; then prompt="Act as a senior style reviewer, fix $sev at $file: $reason by $fix"; fi
         echo "- **$file | $sev**"; echo "  - reason: $reason"; echo "  - fix: $fix"; echo "  - prompt: $prompt"; echo ""
@@ -104,10 +116,22 @@ if [ -s "$tmp_sorted" ]; then
     if [ -z "$sev" ]; then sev=$(echo "$raw" | grep -oiE "critical|high|medium|low|nitpick" | head -1 | tr '[:upper:]' '[:lower:]' || echo "medium"); fi
     reason=$(echo "$raw" | sed -E 's/.*\[[^]]*\][[:space:]]*//' | sed -E 's/[[:space:]]*->[[:space:]]*.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     [ -z "$reason" ] && reason="issue at $file"
+    if echo "$reason" | grep -qiE "test coverage|missing test|brittle mock|coverage gap|test deletion"; then
+      if echo "$reason" | grep -qiE "missing test|test deletion"; then
+        if [ "$sev" != "high" ] && [ "$sev" != "critical" ]; then sev="high"; fi
+      elif echo "$reason" | grep -qiE "brittle|coverage gap"; then
+        if [ "$sev" != "medium" ] && [ "$sev" != "high" ] && [ "$sev" != "critical" ]; then sev="medium"; fi
+      fi
+    fi
+    if echo "$reason" | grep -qiE "typo.*test|test.*typo"; then sev="low"; fi
     if ! echo "$reason" | grep -qiE "CWE|OWASP|Fowler"; then case "$sev" in critical) reason="$reason (CWE-89 / OWASP A03: Injection)" ;; high) reason="$reason (CWE-20 / Fowler Long Method)" ;; medium) reason="$reason (Fowler Code Smell)" ;; low) reason="$reason (Fowler Readability)" ;; nitpick) reason="$reason (Fowler Style)" ;; esac; fi
     fix=$(echo "$raw" | sed -n 's/.*->[[:space:]]*//p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     [ -z "$fix" ] && fix="apply checklist guidance for $sev"
+    if echo "$reason" | grep -qiE "test coverage|missing test|brittle mock|coverage gap"; then
+      if ! echo "$fix" | grep -qi "test"; then fix="$fix - add test for changed code: e.g. tests/test_foo.py covering boundary and failure cases"; fi
+    fi
     prompt="Act as a senior reviewer, fix $sev issue at $file: $reason by $fix"
+    if echo "$reason" | grep -qiE "test coverage|missing test|brittle mock"; then prompt="Act as a senior reviewer, fix $sev test issue at $file: $reason by $fix - add test code covering boundary and failure cases"; fi
     if echo "$sev" | grep -qi "critical"; then prompt="Act as a senior security engineer, fix $sev at $file: $reason by $fix"; fi
     if echo "$sev" | grep -qi "nitpick"; then prompt="Act as a senior style reviewer, fix $sev at $file: $reason by $fix"; fi
     esc() { echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr -d '\n' | sed 's/\t/ /g'; }

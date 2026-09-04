@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# critic.sh — scores worker findings 1-10, emits `score: X` line
+# critic.sh - scores worker findings 1-10, emits `score: X` line
 # Usage: ./scripts/critic.sh <findings-file> [iteration]
 # If findings file already contains a `^score:` line, that score is honored.
 # Otherwise heuristic: score = clamp(10 - findings_count + boost, 1, 10)
@@ -32,8 +32,10 @@ fi
 # Count findings: non-empty lines that look like findings, or all non-empty if no format
 count=0
 if [ -f "$findings_file" ]; then
-  # count non-empty lines excluding score/feedback meta lines
+  # count non-empty lines excluding score/feedback meta lines, guard pipefail for empty file
+  set +o pipefail
   count=$(grep -vE "^score:|^feedback:|^hints:" "$findings_file" | grep -vE "^[[:space:]]*$" | wc -l | tr -d ' ')
+  set -o pipefail
   # wc -l returns 0 for empty; ensure numeric
   if ! echo "$count" | grep -qE "^[0-9]+$"; then count=0; fi
 else
@@ -47,7 +49,7 @@ if echo "$iteration" | grep -qE "^[0-9]+$"; then
 fi
 
 # Heuristic: cleaner diff => higher score; iteration improves
-# Spec also mentions 6 + findings capped — we combine both interpretations
+# Spec also mentions 6 + findings capped - we combine both interpretations
 # by taking max of (10 - count + boost) and (6 + boost) to ensure monotonic gate
 base=$((10 - count + boost))
 floor=$((6 + boost))
@@ -63,7 +65,7 @@ fi
 # For dirty code, ensure eventual pass: if base <8 and boost pushes, use 6+boost
 alt=$((6 + count))
 if [ "$alt" -gt "$base" ] && [ "$alt" -le 10 ] && [ "$count" -le 2 ]; then
-  # small findings: alternative 6+count gives 8 for 2 findings — use max
+  # small findings: alternative 6+count gives 8 for 2 findings - use max
   if [ "$alt" -gt "$base" ]; then base=$alt; fi
 fi
 # monotonic: add boost at least
@@ -80,9 +82,9 @@ fi
 
 echo "score: $score"
 if [ "$score" -ge 8 ]; then
-  echo "feedback: meets gate ($score/10) — $count findings, minor or none"
+  echo "feedback: meets gate ($score/10) - $count findings, minor or none"
   echo "hints: none"
 else
-  echo "feedback: below gate ($score/10) — $count findings require fixes"
+  echo "feedback: below gate ($score/10) - $count findings require fixes"
   echo "hints: address flagged patterns, add boundary coverage, use parameterized statements"
 fi

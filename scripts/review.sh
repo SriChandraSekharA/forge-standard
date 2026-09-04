@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# review.sh — Worker->Critic loop gate 8 max 4, local only
+# review.sh - Worker->Critic loop gate 8 max 4, local only
 # Usage:
 #   ./scripts/review.sh --staged [--preview]
 #   ./scripts/review.sh --range BASE..HEAD [--preview]
@@ -132,13 +132,127 @@ get_diff() {
 get_diff "$diff_file"
 diff_content=$(cat "$diff_file" 2>/dev/null || true)
 
+# TEST_AWARE detection - non-failing, timeout 30s, guards for missing tests
+TESTS_PRESENT=0
+TEST_FILES_LIST=""
+TEST_DISCOVERY=""
+TEST_CONTEXT=""
+# directory guards
+if [ -d tests ] || [ -d testsuite ] || [ -d __tests__ ] || [ -d spec ]; then
+  TESTS_PRESENT=1
+fi
+# glob pattern guards - find *.test.* and *.spec.* (prune heavy dirs, non-failing)
+if [ "$TESTS_PRESENT" -eq 0 ]; then
+  if find . -maxdepth 4 -type f -name "*.test.*" -print 2>/dev/null | grep -q . 2>/dev/null; then
+    TESTS_PRESENT=1
+  elif find . -maxdepth 4 -type f -name "*.spec.*" -print 2>/dev/null | grep -q . 2>/dev/null; then
+    TESTS_PRESENT=1
+  fi
+fi
+# config file guards
+for _cfg in pytest.ini vitest.config.js vitest.config.ts vitest.config.mjs vitest.config.cjs jest.config.js jest.config.ts jest.config.cjs jest.config.mjs; do
+  if [ -f "$_cfg" ]; then TESTS_PRESENT=1; break; fi
+done
+if [ "$TESTS_PRESENT" -eq 0 ]; then
+  if ls vitest.config.* >/dev/null 2>&1; then TESTS_PRESENT=1; fi
+fi
+if [ "$TESTS_PRESENT" -eq 0 ]; then
+  if ls jest.config.* >/dev/null 2>&1; then TESTS_PRESENT=1; fi
+fi
+if [ "$TESTS_PRESENT" -eq 0 ] && [ -f package.json ]; then
+  if grep -q '"test"' package.json 2>/dev/null; then TESTS_PRESENT=1; fi
+fi
+if [ "$TESTS_PRESENT" -eq 0 ] && [ -f Makefile ]; then
+  if grep -qE "^test[[:space:]]*:" Makefile 2>/dev/null; then TESTS_PRESENT=1; fi
+fi
+if [ "$TESTS_PRESENT" -eq 0 ] && [ -f pyproject.toml ]; then
+  if grep -q "pytest" pyproject.toml 2>/dev/null; then TESTS_PRESENT=1; fi
+fi
+# normalize to 0/1
+if [ "$TESTS_PRESENT" != "0" ] && [ "$TESTS_PRESENT" != "1" ]; then TESTS_PRESENT=1; fi
+# if tests detected, collect (a) list test files, (b) discovery with 30s timeout, non-failing
+if [ "$TESTS_PRESENT" -eq 1 ]; then
+  # (a) list test files capped at 20, non-failing
+  _tf1=$(find . -type f \( -name "*.test.*" -o -name "*.spec.*" \) 2>/dev/null | head -20 || true)
+  _tf2=""
+  for _d in tests testsuite __tests__ spec; do
+    if [ -d "$_d" ]; then
+      _tf2="$_tf2
+$(find "$_d" -type f 2>/dev/null | head -20 || true)"
+    fi
+  done
+  TEST_FILES_LIST="$_tf1$_tf2"
+  TEST_FILES_LIST=$(echo "$TEST_FILES_LIST" | grep -v "^[[:space:]]*$" | head -30 || true)
+  # (b) quick test discovery, timeout 30s, failure gracefully
+  _disc=""
+  if command -v pytest >/dev/null 2>&1; then
+    if command -v timeout >/dev/null 2>&1; then
+      _disc=$(timeout 30 pytest --collect-only 2>&1 | head -30 || true)
+    elif command -v gtimeout >/dev/null 2>&1; then
+      _disc=$(gtimeout 30 pytest --collect-only 2>&1 | head -30 || true)
+    else
+      _disc=$(pytest --collect-only 2>&1 | head -30 || true)
+    fi
+  fi
+  if [ -z "$_disc" ] && [ -f package.json ]; then
+    if command -v npm >/dev/null 2>&1; then
+      if command -v timeout >/dev/null 2>&1; then
+        _try=$(timeout 30 npm test -- --listTests 2>&1 | head -20 || true)
+      elif command -v gtimeout >/dev/null 2>&1; then
+        _try=$(gtimeout 30 npm test -- --listTests 2>&1 | head -20 || true)
+      else
+        _try=$(npm test -- --listTests 2>&1 | head -20 || true)
+      fi
+      if echo "$_try" | grep -qE "test|spec|PASS|FAIL" 2>/dev/null; then _disc="$_try"; fi
+      if [ -z "$_disc" ]; then
+        if command -v npx >/dev/null 2>&1; then
+          if command -v timeout >/dev/null 2>&1; then
+            _try2=$(timeout 30 npx jest --listTests 2>&1 | head -20 || true)
+          elif command -v gtimeout >/dev/null 2>&1; then
+            _try2=$(gtimeout 30 npx jest --listTests 2>&1 | head -20 || true)
+          else
+            _try2=$(npx jest --listTests 2>&1 | head -20 || true)
+          fi
+          if echo "$_try2" | grep -qE "\.test|\.spec" 2>/dev/null; then _disc="$_try2"; fi
+        fi
+      fi
+    fi
+  fi
+  if [ -z "$_disc" ]; then
+    if command -v npx >/dev/null 2>&1 && ls vitest.config.* >/dev/null 2>&1; then
+      if command -v timeout >/dev/null 2>&1; then
+        _disc=$(timeout 30 npx vitest list 2>&1 | head -20 || true)
+      elif command -v gtimeout >/dev/null 2>&1; then
+        _disc=$(gtimeout 30 npx vitest list 2>&1 | head -20 || true)
+      else
+        _disc=$(npx vitest list 2>&1 | head -20 || true)
+      fi
+    fi
+  fi
+  TEST_DISCOVERY="$_disc"
+  TEST_CONTEXT="Tests detected: yes
+Test files:
+${TEST_FILES_LIST:-none}
+Discovery:
+${TEST_DISCOVERY:-no discovery output}"
+else
+  TEST_CONTEXT="Tests detected: no"
+fi
+export TESTS_PRESENT
+export TEST_CONTEXT
+export TEST_FILES_LIST
+export TEST_DISCOVERY
+# persist for report/critic visibility (isolated under .anvil-review-loop/, non-failing)
+mkdir -p .anvil-review-loop 2>/dev/null || true
+printf "%s\n" "$TEST_CONTEXT" > .anvil-review-loop/test_context.md 2>/dev/null || true
+
 # --preview: print diff and exit
 if [ "$preview" -eq 1 ]; then
   cat "$diff_file"
   exit 0
 fi
 
-# Prepare output dir — never overwrite learning.md, only append
+# Prepare output dir - never overwrite learning.md, only append
 out_dir=".anvil-review-loop"
 mkdir -p "$out_dir"
 # Ensure learning.md exists (monotonic append only)
@@ -161,13 +275,13 @@ run_worker() {
   if grep -qE "TODO|FIXME|HACK" "$diff_in" 2>/dev/null; then
     grep -nE "TODO|FIXME|HACK" "$diff_in" 2>/dev/null | head -20 | while IFS= read -r line; do
       # extract file context if possible from diff hunk headers
-      echo "L: diff:${line%%:*} [readability/medium] TODO/FIXME left — remove or ticket -> fix hint: resolve TODO" >> "$findings_out"
+      echo "L: diff:${line%%:*} [readability/medium] TODO/FIXME left - remove or ticket -> fix hint: resolve TODO" >> "$findings_out"
     done
   fi
   # 2) console.log / console.debug
   if grep -qE "console\.log|console\.debug" "$diff_in" 2>/dev/null; then
     grep -nE "console\.log|console\.debug" "$diff_in" 2>/dev/null | head -20 | while IFS= read -r line; do
-      echo "L: diff:${line%%:*} [readability/low] console.log leftover — use structured logger -> fix hint: remove console.log" >> "$findings_out"
+      echo "L: diff:${line%%:*} [readability/low] console.log leftover - use structured logger -> fix hint: remove console.log" >> "$findings_out"
     done
   fi
   # 3) SQL injection
@@ -191,20 +305,41 @@ run_worker() {
   # wc -l may include empty; trim
   added_lines=$(echo "$added_lines" | tr -d ' ')
   if [ "$added_lines" -gt 50 ] 2>/dev/null; then
-    echo "L: diff:1 [architecture/medium] long function / large diff ($added_lines added lines) — split by intent (Fowler Long Method) -> fix hint: extract functions <50 lines" >> "$findings_out"
+    echo "L: diff:1 [architecture/medium] long function / large diff ($added_lines added lines) - split by intent (Fowler Long Method) -> fix hint: extract functions <50 lines" >> "$findings_out"
   fi
-  # 6) missing tests
-  if grep -qE "\.ts|\.js|\.py" "$diff_in" 2>/dev/null; then
-    if ! grep -qE "test|spec|__test__" "$diff_in" 2>/dev/null; then
-      echo "L: diff:1 [correctness/high] missing tests for changed code -> fix hint: add boundary/branch/failure tests" >> "$findings_out"
+  # 6) test quality/coverage - axis 6, only when tests exist (TESTS_PRESENT)
+  if [ "${TESTS_PRESENT:-0}" -eq 1 ]; then
+    if grep -qE "\.ts|\.js|\.py" "$diff_in" 2>/dev/null; then
+      if ! grep -qE "test|spec|__test__" "$diff_in" 2>/dev/null; then
+        echo "L: diff:1 [correctness/high] missing test coverage for changed code - changed src without test update -> fix hint: add test for changed code: e.g. tests/test_foo.py covering boundary and failure cases" >> "$findings_out"
+      fi
     fi
+    if grep -qE "^\-\-\- a/.*(test|spec)" "$diff_in" 2>/dev/null || grep -qE "deleted file mode.*test" "$diff_in" 2>/dev/null; then
+      echo "L: diff:1 [correctness/high] test deletion detected - removing tests to fake green is forbidden -> fix hint: restore tests and fix code instead" >> "$findings_out"
+    fi
+    if grep -qiE "mock" "$diff_in" 2>/dev/null; then
+      if ! grep -qiE "assert|expect|edge|boundary" "$diff_in" 2>/dev/null; then
+        echo "L: diff:1 [correctness/medium] brittle mocks without edge cases - mocks lack assertions for failure paths -> fix hint: add edge case test with realistic mock and assert failure branch" >> "$findings_out"
+      fi
+    fi
+    _added_test=$(grep -cE "^\+[^+]" "$diff_in" 2>/dev/null || echo 0)
+    _added_test=$(echo "$_added_test" | tr -d ' ')
+    if [ "$_added_test" -gt 10 ] 2>/dev/null; then
+      if ! grep -qE "edge|boundary|failure|error" "$diff_in" 2>/dev/null; then
+        if ! grep -qE "test|spec" "$diff_in" 2>/dev/null; then
+          echo "L: diff:1 [correctness/medium] test coverage gap - no edge case tests for changed code with $_added_test added lines -> fix hint: add test covering boundary, branch, and failure cases for changed logic" >> "$findings_out"
+        fi
+      fi
+    fi
+  else
+    :
   fi
   # 7) injection hints for later iterations (dedup later)
   if [ "$iter" -gt 1 ] && [ ! -s "$findings_out" ]; then
-    echo "L: diff:1 [readability/low] iteration $iter polish — consider docs/comments -> fix hint: add why-comments" >> "$findings_out"
+    echo "L: diff:1 [readability/low] iteration $iter polish - consider docs/comments -> fix hint: add why-comments" >> "$findings_out"
   fi
   # Ensure at least one finding for empty diff case gets minimal
-  # (do not add artificial failure for empty — let critic score high)
+  # (do not add artificial failure for empty - let critic score high)
 }
 
 # Loop gate 8 max 4
@@ -221,7 +356,7 @@ for i in 1 2 3 4; do
   if [ -n "$hint_accum" ]; then
     aug_diff=$(mktemp)
     cat "$diff_file" > "$aug_diff"
-    # neutral marker — intentionally avoids TODO/console.log/injection keywords
+    # neutral marker - intentionally avoids TODO/console.log/injection keywords
     echo "# review-hint iter $i: $hint_accum" >> "$aug_diff"
     run_worker "$aug_diff" "$findings_tmp" "$i"
     rm -f "$aug_diff"
@@ -233,7 +368,9 @@ for i in 1 2 3 4; do
   if [ -s "$findings_tmp" ]; then
     sort -u "$findings_tmp" -o "$findings_tmp" 2>/dev/null || true
   fi
+  set +o pipefail
   findings_count=$(grep -vE "^[[:space:]]*$" "$findings_tmp" 2>/dev/null | wc -l | tr -d ' ')
+  set -o pipefail
   if ! echo "$findings_count" | grep -qE "^[0-9]+$"; then findings_count=0; fi
 
   # Run critic scoring
@@ -264,6 +401,9 @@ for i in 1 2 3 4; do
     echo "$feedback_line"
     echo "$hints_line"
     echo "findings: $findings_count"
+    if [ "${TESTS_PRESENT:-0}" -eq 1 ]; then
+      echo "TEST_CONTEXT: $TEST_CONTEXT" | head -40
+    fi
     if [ -s "$findings_tmp" ]; then
       cat "$findings_tmp"
     else
@@ -279,6 +419,9 @@ for i in 1 2 3 4; do
     echo "$feedback_line"
     echo "$hints_line"
     echo "findings: $findings_count"
+    if [ "${TESTS_PRESENT:-0}" -eq 1 ]; then
+      echo "TEST_CONTEXT: $TEST_CONTEXT" | head -40
+    fi
     if [ -s "$findings_tmp" ]; then cat "$findings_tmp"; fi
     echo ""
   } >> "$run_log"

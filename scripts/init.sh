@@ -39,7 +39,7 @@ if [ -f "$target_dir/state.json" ]; then
       rm -f "$tmp_merged"
     fi
   else
-    : # jq missing — cp -n semantics preserve
+    : # jq missing - cp -n semantics preserve
   fi
 else
   if [ -n "$state_template" ] && [ -f "$state_template" ]; then
@@ -62,7 +62,7 @@ if [ -f "$target_dir/checklist.md" ]; then
   elif [ -f "./scripts/merge.sh" ]; then
     bash "./scripts/merge.sh" "$target_dir" 2>/dev/null || true
   else
-    : # cp -n semantics — preserve CUSTOM blocks, do not cp blindly
+    : # cp -n semantics - preserve CUSTOM blocks, do not cp blindly
   fi
 else
   if [ -n "$checklist_ref" ] && [ -f "$checklist_ref" ]; then
@@ -83,7 +83,7 @@ else
   echo "no-vcs" > "$target_dir/history.md"
 fi
 
-# learning.md never truncated — append only
+# learning.md never truncated - append only
 if [ ! -f "$target_dir/learning.md" ]; then
   touch "$target_dir/learning.md"
 fi

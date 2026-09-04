@@ -1,4 +1,4 @@
-# AGENTS.md — anvil-review-loop
+# AGENTS.md - anvil-review-loop
 
 ## Purpose
 
