@@ -61,8 +61,11 @@ done
 BASE_SHA=""
 HEAD_SHA=""
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  BASE_SHA=$(git rev-parse origin/main 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo HEAD)
-  HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo HEAD)
+  BASE_SHA="$(git rev-parse --verify origin/main 2>/dev/null | head -n1 || true)"
+  if [ -z "$BASE_SHA" ]; then BASE_SHA="$(git rev-parse --verify HEAD~1 2>/dev/null | head -n1 || true)"; fi
+  if [ -z "$BASE_SHA" ]; then BASE_SHA="HEAD"; fi
+  HEAD_SHA="$(git rev-parse --verify HEAD 2>/dev/null | head -n1 || true)"
+  if [ -z "$HEAD_SHA" ]; then HEAD_SHA="HEAD"; fi
 else
   BASE_SHA="HEAD"
   HEAD_SHA="HEAD"
@@ -257,7 +260,7 @@ for i in 1 2 3 4; do
 
   # Append monotonically to learning.md (never overwrite)
   {
-    echo "## $(date) Iteration $i score: $score_val"
+    echo "## $(date +"%Y-%m-%dT%H:%M:%S+05:30") Iteration $i score: $score_val"
     echo "$feedback_line"
     echo "$hints_line"
     echo "findings: $findings_count"
@@ -315,6 +318,22 @@ fi
 
 # Also ensure at least one score: line is at end for easy grep
 echo "Final score: $final_score" >> "$run_log"
+if command -v jq >/dev/null 2>&1 && [ -f "$out_dir/state.json" ]; then
+  ts_now="$(date +"%Y-%m-%dT%H:%M:%S+05:30" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")"
+  if [ -n "$ts_now" ]; then
+    tmp_ts="$(mktemp)"
+    if jq --arg ts "$ts_now" '.lastReviewAt=$ts' "$out_dir/state.json" > "$tmp_ts" 2>/dev/null && [ -s "$tmp_ts" ] && jq empty "$tmp_ts" 2>/dev/null; then
+      mv "$tmp_ts" "$out_dir/state.json"
+    else
+      rm -f "$tmp_ts"
+    fi
+  fi
+elif [ -f "$out_dir/state.json" ] && command -v python3 >/dev/null 2>&1; then
+  ts_now="$(date +"%Y-%m-%dT%H:%M:%S+05:30" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")"
+  if [ -n "$ts_now" ]; then
+    python3 -c "import json,sys; p=sys.argv[1]; ts=sys.argv[2]; d=json.load(open(p)); d['lastReviewAt']=ts; json.dump(d, open(p,'w'), indent=2)" "$out_dir/state.json" "$ts_now" 2>/dev/null || true
+  fi
+fi
 # Emit final score line in required format for verification
 echo "score: $final_score"
 

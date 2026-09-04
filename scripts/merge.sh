@@ -19,8 +19,7 @@ checklist_ref="$(resolve_ref "references/checklist.md")"
 if [ -f "$target_dir/state.json" ]; then
   if command -v jq >/dev/null 2>&1 && [ -n "$state_template" ] && [ -f "$state_template" ]; then
     tmp_merged="$(mktemp)"
-    # jq -s '.[0] * {"reviews":.[1].reviews}' keeps template keys but preserves existing reviews length
-    jq -s '.[0] * {reviews: .[1].reviews} | .reviews //= []' "$state_template" "$target_dir/state.json" > "$tmp_merged" 2>/dev/null || cp -n "$state_template" "$tmp_merged" 2>/dev/null || true
+    jq -s '.[0] * {reviews: .[1].reviews} * (if .[1].lastReviewAt != null then {lastReviewAt: .[1].lastReviewAt} else {} end) | .reviews //= []' "$state_template" "$target_dir/state.json" > "$tmp_merged" 2>/dev/null || cp -n "$state_template" "$tmp_merged" 2>/dev/null || true
     if [ -s "$tmp_merged" ] && jq empty "$tmp_merged" 2>/dev/null; then
       mv "$tmp_merged" "$target_dir/state.json"
     else
@@ -33,7 +32,7 @@ else
   if [ -n "$state_template" ] && [ -f "$state_template" ]; then
     cp "$state_template" "$target_dir/state.json"
   else
-    echo '{"initialized":true,"reviews":[],"version":1}' > "$target_dir/state.json"
+    echo '{"initialized":true,"reviews":[],"version":1,"lastReviewAt":null}' > "$target_dir/state.json"
   fi
 fi
 

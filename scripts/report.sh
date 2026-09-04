@@ -22,6 +22,17 @@ else
   if [ -n "$latest" ] && [ -f "$latest" ]; then src="$latest"
   else src="$out_dir/learning.md"; fi
 fi
+ts_report="$(date +"%Y-%m-%dT%H:%M:%S+05:30" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  BASE_SHA="$(git rev-parse --verify origin/main 2>/dev/null | head -n1 || true)"
+  if [ -z "$BASE_SHA" ]; then BASE_SHA="$(git rev-parse --verify HEAD~1 2>/dev/null | head -n1 || true)"; fi
+  if [ -z "$BASE_SHA" ]; then BASE_SHA="HEAD"; fi
+  HEAD_SHA="$(git rev-parse --verify HEAD 2>/dev/null | head -n1 || true)"
+  if [ -z "$HEAD_SHA" ]; then HEAD_SHA="HEAD"; fi
+else
+  BASE_SHA="HEAD"
+  HEAD_SHA="HEAD"
+fi
 tmp_findings=$(mktemp); tmp_sorted=$(mktemp); tmp_json=$(mktemp)
 trap 'rm -f "$tmp_findings" "$tmp_sorted" "$tmp_json"' EXIT
 if echo "$src" | grep -qE "\.json$" 2>/dev/null && [ -f "$src" ]; then
@@ -50,7 +61,9 @@ extract_line() { f=$(extract_file "$1"); echo "$f" | grep -oE ":[0-9]+" | tr -d 
 {
   echo "# Anvil Review Report"
   echo ""
-  echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date)"
+  echo "Report generated $ts_report IST - $BASE_SHA...$HEAD_SHA"
+  echo ""
+  echo "Generated: $ts_report"
   echo ""
   if [ ! -s "$tmp_sorted" ]; then
     echo "No findings"

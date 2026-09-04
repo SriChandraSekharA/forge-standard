@@ -32,7 +32,7 @@ if [ -f "$target_dir/state.json" ]; then
     bash "./scripts/merge.sh" "$target_dir" 2>/dev/null || true
   elif command -v jq >/dev/null 2>&1 && [ -n "$state_template" ] && [ -f "$state_template" ]; then
     tmp_merged="$(mktemp)"
-    jq -s '.[0] * {reviews: .[1].reviews} | .reviews //= []' "$state_template" "$target_dir/state.json" > "$tmp_merged" 2>/dev/null || cp -n "$state_template" "$tmp_merged" 2>/dev/null || true
+    jq -s '.[0] * {reviews: .[1].reviews} * (if .[1].lastReviewAt != null then {lastReviewAt: .[1].lastReviewAt} else {} end) | .reviews //= []' "$state_template" "$target_dir/state.json" > "$tmp_merged" 2>/dev/null || cp -n "$state_template" "$tmp_merged" 2>/dev/null || true
     if [ -s "$tmp_merged" ] && jq empty "$tmp_merged" 2>/dev/null; then
       mv "$tmp_merged" "$target_dir/state.json"
     else
@@ -45,7 +45,7 @@ else
   if [ -n "$state_template" ] && [ -f "$state_template" ]; then
     cp "$state_template" "$target_dir/state.json"
   else
-    echo '{"initialized":true,"reviews":[],"version":1}' > "$target_dir/state.json"
+    echo '{"initialized":true,"reviews":[],"version":1,"lastReviewAt":null}' > "$target_dir/state.json"
   fi
 fi
 
@@ -101,15 +101,28 @@ elif [ -f "./scripts/history.sh" ]; then
   bash "./scripts/history.sh" "$target_dir" 2>/dev/null || true
 fi
 
-# handle stale .pid: if [ -f "$target_dir/.pid" ]; then if ! kill -0 $(cat "$target_dir/.pid") 2>/dev/null; then rm "$target_dir/.pid"; fi; fi
-if [ -f "$target_dir/.pid" ]; then
-  pid_val="$(cat "$target_dir/.pid" 2>/dev/null || echo "")"
-  if [ -n "$pid_val" ]; then
-    if ! kill -0 "$pid_val" 2>/dev/null; then
-      rm -f "$target_dir/.pid"
+# handle stale .pid (impeccable pattern): check both .pid and .pid.live, unlink if kill -0 fails
+for pid_file in "$target_dir/.pid" "$target_dir/.pid.live"; do
+  if [ -f "$pid_file" ]; then
+    pid_val="$(cat "$pid_file" 2>/dev/null | tr -d ' \n\r' || echo "")"
+    if [ -z "$pid_val" ]; then
+      rm -f "$pid_file"
+    elif ! kill -0 "$pid_val" 2>/dev/null; then
+      rm -f "$pid_file"
     fi
-  else
-    rm -f "$target_dir/.pid"
+  fi
+done
+
+# stamp lastReviewAt ISO +05:30 (preserve reviews/CUSTOM via jq)
+if command -v jq >/dev/null 2>&1 && [ -f "$target_dir/state.json" ]; then
+  ts_now="$(date +"%Y-%m-%dT%H:%M:%S+05:30" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")"
+  if [ -n "$ts_now" ]; then
+    tmp_ts="$(mktemp)"
+    if jq --arg ts "$ts_now" '.lastReviewAt=$ts' "$target_dir/state.json" > "$tmp_ts" 2>/dev/null && [ -s "$tmp_ts" ] && jq empty "$tmp_ts" 2>/dev/null; then
+      mv "$tmp_ts" "$target_dir/state.json"
+    else
+      rm -f "$tmp_ts"
+    fi
   fi
 fi
 
