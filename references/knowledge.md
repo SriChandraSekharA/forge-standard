@@ -1,22 +1,57 @@
-# Knowledge Fallback Chain (Stub)
+# Knowledge Fallback Chain (anvil-review-loop)
 
-> Full chain logic filled in Task 3. Priority order is authoritative now.
+> Priority order is authoritative. scripts/knowledge.sh walks top-down, first file that exists wins.
 
 ## Fallback Priority
 
-1. `AGENTS.md` — project-specific agent contract at repo root.
-2. `CONTRIBUTING.md` — contribution and style guidelines.
-3. `.github/copilot-instructions.md` — copilot/assistant instructions.
-4. `docs/agents/issue-tracker.md` — issue tracker and workflow docs.
-5. Fowler reference note — Martin Fowler's refactoring and architecture
-   patterns as generic fallback when no repo doc matches.
+1. `AGENTS.md` : project agent contract at repo root. Highest priority.
+2. `CONTRIBUTING.md` : contribution, style, and workflow rules.
+3. `.github/copilot-instructions.md` : assistant and copilot instructions.
+4. `docs/agents/issue-tracker.md` : issue tracker and process docs.
+5. Fowler baseline : Martin Fowler refactoring smells and patterns when no file above exists.
 
 ## Resolution Rule
 
-Walk the chain top-down; first existing file wins for a given rule domain.
-If none exist, apply the Fowler baseline. Cache the resolved source in
-`.anvil-review-loop/knowledge.json` for reuse/update on next invocation.
+Walk the chain in order 1 to 5. For each path, if the file exists at that location, copy its content to `$target_dir/knowledge.md` and stop. If none exist, write this file plus the Fowler baseline to `$target_dir/knowledge.md`. Cache result under `.anvil-review-loop/knowledge.md` for reuse on next run. The target dir defaults to `.anvil-review-loop` and can be passed as `$1`.
+
+## How scripts/knowledge.sh Picks First Existing
+
+```sh
+target_dir=${1:-.anvil-review-loop}
+mkdir -p "$target_dir"
+if [ -f AGENTS.md ]; then cp AGENTS.md "$target_dir/knowledge.md"
+elif [ -f CONTRIBUTING.md ]; then cp CONTRIBUTING.md "$target_dir/knowledge.md"
+elif [ -f .github/copilot-instructions.md ]; then cp .github/copilot-instructions.md "$target_dir/knowledge.md"
+elif [ -f docs/agents/issue-tracker.md ]; then cp docs/agents/issue-tracker.md "$target_dir/knowledge.md"
+else cat references/knowledge.md > "$target_dir/knowledge.md"  # or inline Fowler fallback if references missing
+fi
+# Also copy checklist if not yet present:
+if [ ! -f "$target_dir/checklist.md" ] && [ -f references/checklist.md ]; then cp references/checklist.md "$target_dir/checklist.md"; fi
+```
+
+Note: the script also tries `$(dirname "$0")/../references/knowledge.md` and an inline fallback so fixtures in temp dirs still resolve.
+
+## Fowler Smells Baseline (generic fallback, >=10)
+
+When no repo doc matches, apply these smells as review lens:
+
+1. Long Method : method too long, split by intent
+2. Large Class : class does too much, split by responsibility
+3. Feature Envy : method uses another object more than its own
+4. Data Clumps : same group of data items appear together
+5. Primitive Obsession : primitives used where small object would help
+6. Long Parameter List : too many params, group into object
+7. Duplicate Code : same structure in more than one place
+8. Shotgun Surgery : one change touches many classes
+9. Divergent Change : one class changes for many reasons
+10. Message Chains : `a.getB().getC().getD()` chain
+11. Middle Man : class delegates most work, adds little value
+12. Inappropriate Intimacy : classes know too much about each other
+
+## Cache
+
+Resolved source is cached at `.anvil-review-loop/knowledge.md`. The checklist is cached at `.anvil-review-loop/checklist.md` if not already present. Later runs may merge, not overwrite blindly.
 
 ## Status
 
-Stub only — detailed resolver and caching logic lands in Task 3.
+Authoritative for Task 3 and later.
