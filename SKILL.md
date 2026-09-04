@@ -1,6 +1,6 @@
 ---
-name: anvil-review-loop
-description: "Quota-free iterative code review with continuous loop, architecture review, security review, vulnerability review, OWASP review, correctness review, readability review, performance review, code quality review, review loop, iterative review, multi reviewer, git diff review, standards review, spec review, SOLID review - idempotent .anvil-review-loop/ per-repo memory"
+name: forge-standard
+description: "Quota-free iterative code review with continuous loop, architecture review, security review, vulnerability review, OWASP review, correctness review, readability review, performance review, code quality review, review loop, iterative review, multi reviewer, git diff review, standards review, spec review, SOLID review - idempotent .forge-standard/ per-repo memory"
 ---
 
 # Anvil Review Loop
@@ -21,7 +21,7 @@ Core principles:
 - **Quota-free** - no API keys, no usage caps, no network gate.
 - **Loop-gated** - iterates up to 8 cycles, at most 4 auto-fix attempts per cycle.
 - **Ranked report** - findings ordered critical -> high -> medium -> low -> nitpick.
-- **Idempotent memory** - per-repo `.anvil-review-loop/` is created once and reused.
+- **Idempotent memory** - per-repo `.forge-standard/` is created once and reused.
 - **VCS-aware** - works with git, hg, or no VCS (degrades gracefully).
 
 Use this skill when you need a thorough review before merging, when you want
@@ -33,35 +33,35 @@ checklist that lives with the repo.
 Global install (recommended):
 
 ```bash
-npx skills add SriChandraSekharA/anvil-review-loop --skill anvil-review-loop -g
+npx skills add SriChandraSekharA/forge-standard --skill forge-standard -g
 ```
 
 Local project install:
 
 ```bash
-npx skills add SriChandraSekharA/anvil-review-loop --skill anvil-review-loop
+npx skills add SriChandraSekharA/forge-standard --skill forge-standard
 ```
 
 Manual clone:
 
 ```bash
-git clone https://github.com/SriChandraSekharA/anvil-review-loop.git
+git clone https://github.com/SriChandraSekharA/forge-standard.git
 ```
 
-After install the skill is available as `anvil-review-loop` via `npx skills add -l`.
+After install the skill is available as `forge-standard` via `npx skills add -l`.
 
 ## Contract
 
-The skill follows a strict idempotent contract anchored at `.anvil-review-loop/`:
+The skill follows a strict idempotent contract anchored at `.forge-standard/`:
 
-1. **First invocation** - `init` creates `.anvil-review-loop/` at the repo root
+1. **First invocation** - `init` creates `.forge-standard/` at the repo root
    with baseline config, checklist snapshot, and knowledge fallback manifest.
 2. **Reuse thereafter** - every subsequent invocation reads the existing
-   `.anvil-review-loop/` directory, reuses stored state, and updates only what
+   `.forge-standard/` directory, reuses stored state, and updates only what
    changed (findings, iteration counter, timestamps).
-3. **Never recreate blindly** - if `.anvil-review-loop/` already exists, scripts
+3. **Never recreate blindly** - if `.forge-standard/` already exists, scripts
    do not overwrite user customizations; they merge or append.
-4. **Per-repo isolation** - each repository owns its own `.anvil-review-loop/`
+4. **Per-repo isolation** - each repository owns its own `.forge-standard/`
    directory; no global state leaks between repos.
 5. **Deterministic cleanup** - `report` consolidates findings without mutating
    source files; `review` may propose patches but requires explicit apply.
@@ -95,7 +95,7 @@ via the installed skill path.
 ./scripts/init.sh
 ```
 
-Creates `.anvil-review-loop/` on first run; on later runs validates and
+Creates `.forge-standard/` on first run; on later runs validates and
 updates the manifest. Safe to run repeatedly.
 
 ### 2. Review
@@ -133,13 +133,13 @@ No tokens, no external calls, no hidden uploads.
 ## Structure
 
 ```
-anvil-review-loop/
+forge-standard/
   SKILL.md                # this file - frontmatter + contract
   README.md               # install, features, license
   AGENTS.md               # contributor contract for this repo
-  .gitignore              # ignores .anvil-review-loop/, logs, caches
+  .gitignore              # ignores .forge-standard/, logs, caches
   scripts/
-    init.sh               # idempotent .anvil-review-loop/ bootstrap
+    init.sh               # idempotent .forge-standard/ bootstrap
     review.sh             # staged | range | file review loop
     report.sh             # ranked report generator
   references/
@@ -154,14 +154,14 @@ anvil-review-loop/
 - `scripts/` - bash entry points; keep them POSIX-friendly and shellcheck clean.
 - `references/` - authoritative checklists and fallback docs.
 - `templates/` - output templates consumed by `report.sh`.
-- `.anvil-review-loop/` - per-repo runtime memory (gitignored, never committed).
+- `.forge-standard/` - per-repo runtime memory (gitignored, never committed).
 
 ## Test-Aware Review
 
 When the target repo has tests, the review loop includes them automatically. Detection is non-failing and uses guards for `tests/` `testsuite/` `__tests__/` `spec/` directories, glob patterns `**/*.test.*` `**/*.spec.*` via `find . -maxdepth 4 -name "*.test.*"`, and config files `pytest.ini` `vitest.config.*` `jest.config.*` `pyproject.toml` pytest `package.json` script test and `Makefile` test - all with `if [ -f ... ]` or `grep -q` guards and `|| true` so review never blocks if none found.
 
 - If tests are detected, `scripts/review.sh` collects (a) list of test files (capped at 20, `find ... | head -20`) and (b) quick discovery with 30s timeout: `timeout 30 pytest --collect-only 2>&1 | head -30 || timeout 30 npm test -- --listTests 2>&1 | head -20 || true` - failure is graceful and does not fail the review.
-- `TEST_CONTEXT` is set to `Tests detected: yes` plus file list and discovery output, persisted to `.anvil-review-loop/test_context.md` and passed to worker/critic prompts.
+- `TEST_CONTEXT` is set to `Tests detected: yes` plus file list and discovery output, persisted to `.forge-standard/test_context.md` and passed to worker/critic prompts.
 - Worker and critic include axis 6 (test quality/coverage): missing tests for changed code, brittle mocks, no edge cases, coverage gaps, test deletion to fake green. Prompt section: "If TEST_CONTEXT shows existing tests, review them for coverage gaps, missing edge cases, brittle mocks, and whether changed code lacks tests."
 - Checklist `references/checklist.md` has Test Coverage (Axis 6) with items: changed code has tests? edge cases covered? mocks not brittle? no test deletion to fake green? These map to severity medium/high when missing (missing tests for critical code -> high, typo in test -> low).
 - Report `scripts/report.sh` maps test findings to severity and ensures fix/prompt suggests test code: e.g. `add test for changed code: tests/test_foo.py covering boundary and failure cases`.
@@ -169,7 +169,7 @@ When the target repo has tests, the review loop includes them automatically. Det
 Example state when tests present:
 
 ```bash
-cat .anvil-review-loop/test_context.md
+cat .forge-standard/test_context.md
 # Tests detected: yes
 # Test files:
 # tests/test_foo.py
@@ -197,4 +197,4 @@ When no tests exist (`Tests detected: no`), the loop skips test checks and does 
 - Write findings as actionable items with file:line, severity, and fix hint.
 - Prefer knowledge fallback chain over hard-coded rules when repo docs exist.
 - No network calls inside the loop; all analysis is local.
-- Respect `.gitignore` and `.anvil-review-loop/` isolation.
+- Respect `.gitignore` and `.forge-standard/` isolation.

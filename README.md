@@ -1,23 +1,23 @@
-# anvil-review-loop
+# forge-standard
 
 Quota-free iterative code review with continuous loop - no tokens, no quotas, no external service dependency.
 
 ## Install
 
 ```bash
-npx --yes skills add SriChandraSekharA/anvil-review-loop --skill anvil-review-loop -g -y
+npx --yes skills add SriChandraSekharA/forge-standard --skill forge-standard -g -y
 ```
 
 Local install:
 
 ```bash
-npx --yes skills add SriChandraSekharA/anvil-review-loop --skill anvil-review-loop -g -y
+npx --yes skills add SriChandraSekharA/forge-standard --skill forge-standard -g -y
 ```
 
 Manual:
 
 ```bash
-git clone https://github.com/SriChandraSekharA/anvil-review-loop.git
+git clone https://github.com/SriChandraSekharA/forge-standard.git
 ```
 
 ## Features
@@ -26,7 +26,7 @@ git clone https://github.com/SriChandraSekharA/anvil-review-loop.git
 - **VCS-aware** - detects `git` || `hg` || `none` and degrades gracefully; staged, range, and file modes work across all three.
 - **Loop gate 8 max4** - iterates up to 8 cycles, at most 4 auto-fix attempts per cycle; deterministic stop gate prevents infinite loops.
 - **Ranked report** - findings ordered `critical -> high -> medium -> low -> nitpick` with file:line, severity, and actionable fix hints.
-- **Idempotent memory** - `.anvil-review-loop/` is created on first invocation and reused/updated thereafter; per-repo isolation, never committed.
+- **Idempotent memory** - `.forge-standard/` is created on first invocation and reused/updated thereafter; per-repo isolation, never committed.
 - **Fully offline** - no API keys, no network calls, no hidden uploads; all analysis runs locally via bash scripts.
 
 ## Quick Start
@@ -93,7 +93,7 @@ Report generated 2026-09-05T03:45:00+05:30 IST - <BASE_SHA>...<HEAD_SHA>
 Generated: 2026-09-05T03:45:00+05:30
 ```
 
-Behavior: `scripts/init.sh` and `scripts/review.sh` update `lastReviewAt` via `date +"%Y-%m-%dT%H:%M:%S+05:30"` (fallback to UTC `Z` if unavailable) and preserve `.anvil-review-loop/reviews` and any `CUSTOM` / `USER CUSTOM START` blocks via `scripts/merge.sh`.
+Behavior: `scripts/init.sh` and `scripts/review.sh` update `lastReviewAt` via `date +"%Y-%m-%dT%H:%M:%S+05:30"` (fallback to UTC `Z` if unavailable) and preserve `.forge-standard/reviews` and any `CUSTOM` / `USER CUSTOM START` blocks via `scripts/merge.sh`.
 
 ## License
 
@@ -101,4 +101,4 @@ MIT - see `LICENSE` if present. Free for personal and commercial use.
 
 ## Contract
 
-`.anvil-review-loop/` is initialized on first invocation and reused/updated on every later invocation. Do not commit it; it is gitignored by default.
+`.forge-standard/` is initialized on first invocation and reused/updated on every later invocation. Do not commit it; it is gitignored by default.

@@ -1,0 +1,28 @@
+
+███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+
+┌   skills 
+│
+│  Tip: use the --yes (-y) and --global (-g) flags to install without prompts.
+│
+◇  Source: /Users/webileapps/Chandu/github/forge-standard
+│
+◇  Local path validated
+│
+◇  Found 1 skill
+
+│
+◇  Available Skills
+│
+│    forge-standard
+│
+│      Quota-free iterative code review with continuous loop, architecture review, security review, vulnerability review, OWASP review, correctness review, readability review, performance review, code quality review, review loop, iterative review, multi reviewer, git diff review, standards review, spec review, SOLID review - idempotent .forge-standard/ per-repo memory
+
+│
+└  Use --skill <name> to install specific skills
+

@@ -1,4 +1,4 @@
-# Review Checklist: 6-Axis (anvil-review-loop)
+# Review Checklist: 6-Axis (forge-standard)
 
 > Ranked report: critical -> high -> medium -> low -> nitpick. Gate 8/10.
 > Axes: correctness, readability/arch, security, performance, test coverage (axis 6: missing tests, brittle mocks, edge cases).

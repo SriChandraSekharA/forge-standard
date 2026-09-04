@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target_dir="${1:-.anvil-review-loop}"
+target_dir="${1:-.forge-standard}"
 mkdir -p "$target_dir"
 
 # Resolve script dir for fallback references lookup
@@ -11,8 +11,8 @@ if [ -f "references/knowledge.md" ]; then
   repo_ref_knowledge="references/knowledge.md"
 elif [ -f "$script_dir/../references/knowledge.md" ]; then
   repo_ref_knowledge="$script_dir/../references/knowledge.md"
-elif [ -f "/Users/webileapps/Chandu/github/anvil-review-loop/references/knowledge.md" ]; then
-  repo_ref_knowledge="/Users/webileapps/Chandu/github/anvil-review-loop/references/knowledge.md"
+elif [ -f "/Users/webileapps/Chandu/github/forge-standard/references/knowledge.md" ]; then
+  repo_ref_knowledge="/Users/webileapps/Chandu/github/forge-standard/references/knowledge.md"
 fi
 
 repo_ref_checklist=""
@@ -20,8 +20,8 @@ if [ -f "references/checklist.md" ]; then
   repo_ref_checklist="references/checklist.md"
 elif [ -f "$script_dir/../references/checklist.md" ]; then
   repo_ref_checklist="$script_dir/../references/checklist.md"
-elif [ -f "/Users/webileapps/Chandu/github/anvil-review-loop/references/checklist.md" ]; then
-  repo_ref_checklist="/Users/webileapps/Chandu/github/anvil-review-loop/references/checklist.md"
+elif [ -f "/Users/webileapps/Chandu/github/forge-standard/references/checklist.md" ]; then
+  repo_ref_checklist="/Users/webileapps/Chandu/github/forge-standard/references/checklist.md"
 fi
 
 # Fallback priority: AGENTS.md -> CONTRIBUTING.md -> .github/copilot-instructions.md -> docs/agents/issue-tracker.md -> Fowler baseline

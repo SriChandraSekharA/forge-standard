@@ -1,4 +1,4 @@
-# AGENTS.md - anvil-review-loop
+# AGENTS.md - forge-standard
 
 ## Purpose
 
@@ -7,7 +7,7 @@ continuous loop, ranked reporting, and per-repo memory. No external tokens.
 
 ## Skill Contract
 
-- `.anvil-review-loop/` is created on first invocation by `./scripts/init.sh`
+- `.forge-standard/` is created on first invocation by `./scripts/init.sh`
   and reused/updated on every later invocation. Never delete blindly.
 - Scripts are idempotent and POSIX-friendly: `init.sh`, `review.sh`, `report.sh`.
 - Reports are ranked `critical -> high -> medium -> low -> nitpick`.

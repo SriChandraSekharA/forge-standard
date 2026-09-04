@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target_dir="${1:-.anvil-review-loop}"
+target_dir="${1:-.forge-standard}"
 mkdir -p "$target_dir"
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -9,7 +9,7 @@ resolve_ref() {
   local rel="$1"
   if [ -f "$rel" ]; then echo "$rel"
   elif [ -f "$script_dir/../$rel" ]; then echo "$script_dir/../$rel"
-  elif [ -f "/Users/webileapps/Chandu/github/anvil-review-loop/$rel" ]; then echo "/Users/webileapps/Chandu/github/anvil-review-loop/$rel"
+  elif [ -f "/Users/webileapps/Chandu/github/forge-standard/$rel" ]; then echo "/Users/webileapps/Chandu/github/forge-standard/$rel"
   else echo ""; fi
 }
 

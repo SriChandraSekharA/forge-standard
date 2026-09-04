@@ -1,4 +1,4 @@
-# Knowledge Fallback Chain (anvil-review-loop)
+# Knowledge Fallback Chain (forge-standard)
 
 > Priority order is authoritative. scripts/knowledge.sh walks top-down, first file that exists wins.
 
@@ -12,12 +12,12 @@
 
 ## Resolution Rule
 
-Walk the chain in order 1 to 5. For each path, if the file exists at that location, copy its content to `$target_dir/knowledge.md` and stop. If none exist, write this file plus the Fowler baseline to `$target_dir/knowledge.md`. Cache result under `.anvil-review-loop/knowledge.md` for reuse on next run. The target dir defaults to `.anvil-review-loop` and can be passed as `$1`.
+Walk the chain in order 1 to 5. For each path, if the file exists at that location, copy its content to `$target_dir/knowledge.md` and stop. If none exist, write this file plus the Fowler baseline to `$target_dir/knowledge.md`. Cache result under `.forge-standard/knowledge.md` for reuse on next run. The target dir defaults to `.forge-standard` and can be passed as `$1`.
 
 ## How scripts/knowledge.sh Picks First Existing
 
 ```sh
-target_dir=${1:-.anvil-review-loop}
+target_dir=${1:-.forge-standard}
 mkdir -p "$target_dir"
 if [ -f AGENTS.md ]; then cp AGENTS.md "$target_dir/knowledge.md"
 elif [ -f CONTRIBUTING.md ]; then cp CONTRIBUTING.md "$target_dir/knowledge.md"
@@ -50,7 +50,7 @@ When no repo doc matches, apply these smells as review lens:
 
 ## Cache
 
-Resolved source is cached at `.anvil-review-loop/knowledge.md`. The checklist is cached at `.anvil-review-loop/checklist.md` if not already present. Later runs may merge, not overwrite blindly.
+Resolved source is cached at `.forge-standard/knowledge.md`. The checklist is cached at `.forge-standard/checklist.md` if not already present. Later runs may merge, not overwrite blindly.
 
 ## Status
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target_dir="${1:-.anvil-review-loop}"
+target_dir="${1:-.forge-standard}"
 mkdir -p "$target_dir"
 
 ts_hist="$(date +"%Y-%m-%dT%H:%M:%S+05:30" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")"

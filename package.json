@@ -1,0 +1,29 @@
+{
+  "name": "forge-standard",
+  "version": "1.0.0",
+  "description": "Quota-free iterative code review with continuous loop, architecture review, security review, vulnerability review, OWASP review, correctness review, readability review, performance review, code quality review, review loop, iterative review, multi reviewer, git diff review, standards review, spec review, SOLID review — idempotent .forge-standard/ per-repo memory",
+  "keywords": [
+    "code-review",
+    "pr-review",
+    "pull-request-review",
+    "code-review-checklist",
+    "security-review",
+    "vulnerability-review",
+    "owasp-review",
+    "architecture-review",
+    "code-quality-review",
+    "review-loop",
+    "iterative-review",
+    "multi-reviewer",
+    "git-diff-review",
+    "standards-review",
+    "spec-review",
+    "solid-review",
+    "quota-free-review",
+    "anvil"
+  ],
+  "skills": [
+    "forge-standard"
+  ],
+  "license": "MIT"
+}

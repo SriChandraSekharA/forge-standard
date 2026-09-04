@@ -59,4 +59,4 @@ Summary: {{summary}}
 
 When no findings: `No findings` in each section.
 
-Usage: `scripts/report.sh` fills {{findings}} sorted critical=0 high=1 medium=2 low=3 nitpick=4 and writes `.anvil-review-loop/report.md` + `review.json`.
+Usage: `scripts/report.sh` fills {{findings}} sorted critical=0 high=1 medium=2 low=3 nitpick=4 and writes `.forge-standard/report.md` + `review.json`.
