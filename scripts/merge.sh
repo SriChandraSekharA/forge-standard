@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# fix: merge-preservation - 2nd invocation never overwrites: state.json jq merge preserves reviews[], checklist CUSTOM blocks, history always overwrites, learning.md append-only
 
 target_dir="${1:-.forge-standard}"
 mkdir -p "$target_dir"
