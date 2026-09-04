@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# feat: worker->critic loop gate 8 max4 - continuous loop 8 cycles, 4 auto-fix attempts, monotonic learning.md append
 
 # review.sh - Worker->Critic loop gate 8 max 4, local only
 # Usage:

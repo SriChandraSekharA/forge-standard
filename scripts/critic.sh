@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# feat: critic scoring - parses score: line or heuristic clamp 1-10, emits score:/feedback:/hints:
 
 # critic.sh - scores worker findings 1-10, emits `score: X` line
 # Usage: ./scripts/critic.sh <findings-file> [iteration]
