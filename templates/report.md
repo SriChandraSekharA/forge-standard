@@ -1,5 +1,6 @@
 # Anvil Review Report
 
+<!-- feat: ranked report template - 5 sections Critical->Nitpick strict order, placeholders critical_findings table + bullet reason/fix/prompt -->
 Generated: {{generated_at}}
 
 Summary: {{summary}}
