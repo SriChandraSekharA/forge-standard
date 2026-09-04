@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# feat: idempotent init - VCS-aware (git/hg/no-vcs) + history sync via history.sh, per-repo .forge-standard/ memory
 
 target_dir="${1:-.forge-standard}"
 mkdir -p "$target_dir"

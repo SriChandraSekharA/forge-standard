@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# feat: VCS history sync - git log --oneline -30 > history.md with newline guard, hg/no-vcs fallback
 
 target_dir="${1:-.forge-standard}"
 mkdir -p "$target_dir"
