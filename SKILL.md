@@ -3,7 +3,7 @@ name: forge-standard
 description: "Quota-free iterative code review with continuous loop, architecture review, security review, vulnerability review, OWASP review, correctness review, readability review, performance review, code quality review, review loop, iterative review, multi reviewer, git diff review, standards review, spec review, SOLID review - idempotent .forge-standard/ per-repo memory"
 ---
 
-# Anvil Review Loop
+# Forge Standard
 
 Quota-free iterative code review that runs entirely in your repository.
 
@@ -11,7 +11,7 @@ Quota-free iterative code review that runs entirely in your repository.
 
 ## Overview
 
-Anvil Review Loop brings a disciplined, repeatable review pass to every change
+Forge Standard brings a disciplined, repeatable review pass to every change
 without quotas, rate limits, or external dependencies. It operates as a
 continuous loop with multiple reviewer perspectives, a ranked report, and
 per-repo memory that persists across invocations.
