@@ -1,5 +1,6 @@
 .forge-standard/
 *.log
+!.omo/verify.log
 .DS_Store
 node_modules/
 __pycache__/

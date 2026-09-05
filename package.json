@@ -20,12 +20,19 @@
     "spec-review",
     "solid-review",
     "quota-free-review",
-    "anvil",
     "owasp",
     "code-quality"
   ],
   "skills": [
     "forge-standard"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "npm --prefix mcp test",
+    "build:mcp": "npm --prefix mcp run build"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7"
+  }
 }

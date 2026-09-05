@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "forge-standard": {
+      "command": "node",
+      "args": ["mcp/dist/server.js"],
+      "cwd": "/Users/webileapps/Chandu/github/forge-standard",
+      "env": {}
+    }
+  }
+}

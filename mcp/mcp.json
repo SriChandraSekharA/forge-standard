@@ -1,0 +1,43 @@
+{
+  "name": "forge-standard",
+  "version": "1.0.0",
+  "description": "Quota-free iterative code review with continuous loop — MCP stdio server wrapping review.sh",
+  "transport": "stdio",
+  "command": "node",
+  "args": ["mcp/dist/server.js"],
+  "entry": "mcp/src/server.ts",
+  "sdk": "@modelcontextprotocol/sdk",
+  "tools": [
+    {
+      "name": "forge_review",
+      "description": "Run forge-standard review loop (wraps scripts/review.sh). Supports staged, range, and file modes with ranked report.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["auto", "staged", "range", "file"],
+            "description": "Review mode: staged (git diff --cached), range (commit range), file (single file), auto (staged else BASE...HEAD)"
+          },
+          "range": {
+            "type": "string",
+            "description": "Git range for range mode, e.g. HEAD~1..HEAD or main...feature"
+          },
+          "file": {
+            "type": "string",
+            "description": "File path for file mode, e.g. path/to/file.ts"
+          },
+          "preview": {
+            "type": "boolean",
+            "description": "If true, only preview the diff without running the loop"
+          },
+          "workdir": {
+            "type": "string",
+            "description": "Working directory to run review in (defaults to repo root / current cwd)"
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

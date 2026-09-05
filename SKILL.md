@@ -191,6 +191,52 @@ Example report snippet mentioning tests:
 
 When no tests exist (`Tests detected: no`), the loop skips test checks and does not block - review still passes with exit 0.
 
+## MCP Server
+
+Same-repo server at `mcp/server.ts` with manifest `mcp/mcp.json`, stdio transport via `@modelcontextprotocol/sdk`. Mirrors `scripts/review.sh` locally, no network.
+
+### Tool list (synced to `mcp/mcp.json` exactly)
+
+`mcp/mcp.json` declares one tool:
+
+```json
+{
+  "name": "forge_review",
+  "description": "Run forge-standard review loop (wraps scripts/review.sh). Supports staged, range, and file modes with ranked report.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "mode": { "type": "string", "enum": ["auto", "staged", "range", "file"], "description": "Review mode: staged (git diff --cached), range (commit range), file (single file), auto (staged else BASE...HEAD)" },
+      "range": { "type": "string", "description": "Git range for range mode, e.g. HEAD~1..HEAD or main...feature" },
+      "file": { "type": "string", "description": "File path for file mode, e.g. path/to/file.ts" },
+      "preview": { "type": "boolean", "description": "If true, only preview the diff without running the loop" },
+      "workdir": { "type": "string", "description": "Working directory to run review in (defaults to repo root / current cwd)" }
+    },
+    "required": []
+  }
+}
+```
+
+Table form:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mode` | `"auto" \| "staged" \| "range" \| "file"` | Review mode: staged (git diff --cached), range (commit range), file (single file), auto (staged else BASE...HEAD) |
+| `range` | `string` | Git range for range mode, e.g. `HEAD~1..HEAD` or `main...feature` |
+| `file` | `string` | File path for file mode, e.g. `path/to/file.ts` |
+| `preview` | `boolean` | If true, only preview the diff without running the loop |
+| `workdir` | `string` | Working directory to run review in (defaults to repo root / current cwd) |
+
+All paths are quoted and `workdir` is passed as `cwd` to `spawn("bash", [...])` with `path.resolve` and `existsSync` validation. No shell interpolation.
+
+### Wiring
+
+- `mcp.json` at `mcp/mcp.json` with `transport: stdio`, `command: node`, `args: ["mcp/dist/server.js"]`, `entry: mcp/src/server.ts`.
+- `mcp/src/server.ts` implements `initialize`, `tools/list`, `tools/call` for `forge_review`.
+- Client config at `examples/claude-config.json` with `mcpServers.forge-standard.command = node` and quoted `cwd`.
+- Runnable demos: `examples/mcp-client.js` (node) and `examples/stdio-smoke.sh` (bash piped JSON-RPC), both support quoted `--workdir` with spaces.
+- Inspector: `npx @modelcontextprotocol/inspector node mcp/dist/server.js` then verify `tools/list` shows `forge_review`.
+
 ## Conventions
 
 - Keep reviews deterministic: same input diff produces same ordered findings.

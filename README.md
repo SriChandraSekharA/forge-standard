@@ -141,9 +141,101 @@ Generated: 2026-09-05T03:45:00+05:30
 
 Behavior: `scripts/init.sh` and `scripts/review.sh` update `lastReviewAt` via `date +"%Y-%m-%dT%H:%M:%S+05:30"` (fallback to UTC `Z` if unavailable) and preserve `.forge-standard/reviews` and any `CUSTOM` / `USER CUSTOM START` blocks via `scripts/merge.sh`.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the npx-based development flow, and the PR process. Quick checks before you open a PR:
+
+```bash
+bash -n scripts/*.sh
+npx tsc --noEmit
+npm test
+```
+
+Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) and [Security Policy](SECURITY.md).
+
 ## License
 
-MIT - see `LICENSE` if present. Free for personal and commercial use.
+[MIT](LICENSE) - Copyright (c) 2026 Chandra Sekhar. Free for personal and commercial use.
+
+## MCP Server
+
+Same-repo MCP server at `mcp/` wrapping `scripts/review.sh` as tool `forge_review` via stdio transport.
+
+### Install
+
+Build once:
+
+```bash
+npm --prefix mcp install
+npm run build --prefix mcp
+```
+
+Configure your MCP client with `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "forge-standard": {
+      "command": "node",
+      "args": ["mcp/dist/server.js"],
+      "cwd": "/Users/webileapps/Chandu/github/forge-standard"
+    }
+  }
+}
+```
+
+Claude Desktop snippet is at `examples/claude-config.json`. Copy it to your Claude config:
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
+Merge the `mcpServers` block, restart Claude, then `forge_review` appears in tools.
+
+### Inspector (npx)
+
+No install needed, use the official inspector:
+
+```bash
+npx @modelcontextprotocol/inspector node mcp/dist/server.js
+```
+
+Then open `http://localhost:6274`, select Transport `STDIO`, Command `node`, Args `mcp/dist/server.js`, click Connect. `tools/list` should show `forge_review`. Try a call with `{ "mode": "staged", "workdir": "/Users/webileapps/Chandu/github/forge-standard" }`.
+
+CLI probe without UI:
+
+```bash
+npx -y @modelcontextprotocol/inspector --cli node mcp/dist/server.js --method tools/list
+```
+
+### Examples
+
+Runnable client and smoke test live in `examples/`:
+
+```bash
+# Node client demo (initialize -> tools/list -> tools/call with quoted workdir)
+node examples/mcp-client.js
+node examples/mcp-client.js --workdir "/tmp/with spaces/my repo"
+
+# Bash stdio smoke (piped JSON-RPC, quoted paths)
+bash examples/stdio-smoke.sh
+bash examples/stdio-smoke.sh --workdir "/tmp/with spaces/my repo"
+```
+
+Both quote `workdir` via `path.resolve` and `spawn` cwd, no shell interpolation.
+
+### Tool: forge_review
+
+Wraps `scripts/review.sh`, local only, no network. From `mcp/mcp.json`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mode` | `"auto" \| "staged" \| "range" \| "file"` | Review mode (default `auto`) |
+| `range` | `string` | Git range for `range` mode, e.g. `HEAD~1..HEAD` |
+| `file` | `string` | File path for `file` mode |
+| `preview` | `boolean` | If true, `--preview` diff only |
+| `workdir` | `string` | Working directory (quoted, defaults to repo root) |
+
+See `mcp/README.md` and `docs/MCP.md` for full transport details and `examples/` for runnable demos.
 
 ## Contract
 

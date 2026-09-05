@@ -1,0 +1,29 @@
+# forge-standard verify.log — 2026-09-05T00:39:38Z
+workdir: /Users/webileapps/Chandu/github/forge-standard
+server: /Users/webileapps/Chandu/github/forge-standard/mcp/dist/server.js
+
+## initialize (id 1)
+{"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"forge-standard","version":"1.0.0"}},"jsonrpc":"2.0","id":1}
+
+## tools/list (id 2)
+{"result":{"tools":[{"name":"forge_review","description":"Run forge-standard review loop (wraps scripts/review.sh). Supports staged, range, and file modes with ranked report critical->high->medium->low->nitpick. Local only, no network.","inputSchema":{"type":"object","properties":{"mode":{"type":"string","enum":["auto","staged","range","file"],"description":"Review mode: staged (git diff --cached), range (commit range), file (single file), auto (staged else BASE...HEAD)"},"range":{"type":"string","description":"Git range for range mode, e.g. HEAD~1..HEAD or main...feature"},"file":{"type":"string","description":"File path for file mode, e.g. path/to/file.ts"},"preview":{"type":"boolean","description":"If true, only preview the diff without running the loop"},"workdir":{"type":"string","description":"Working directory to run review in (defaults to repo root)"}},"required":[]}}]},"jsonrpc":"2.0","id":2}
+
+## tools/call forge_review (id 3)
+{"result":{"content":[{"type":"text","text":"exitCode: 0\n\nworkdir: /Users/webileapps/Chandu/github/forge-standard\n\nargs: --preview\n\nArtifacts in /Users/webileapps/Chandu/github/forge-standard/.forge-standard (learning.md, run-*.log, state.json)"}],"isError":false},"jsonrpc":"2.0","id":3}
+
+## parsed checks
+capabilities.tools present: True caps={'tools': {}}
+serverInfo: {'name': 'forge-standard', 'version': '1.0.0'}
+tools/list count=1 names=['forge_review']
+tools/call isError=False hasContent=True
+text preview 300: exitCode: 0
+
+workdir: /Users/webileapps/Chandu/github/forge-standard
+
+args: --preview
+
+Artifacts in /Users/webileapps/Chandu/github/forge-standard/.forge-standard (learning.md, run-*.log, state.json)
+workdir echoed: True
+exitCode present: True
+
+## stderr
