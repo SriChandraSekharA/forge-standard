@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".omo/**"
+      - ".forge-standard/**"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - ".omo/**"
+      - ".forge-standard/**"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install MCP deps
+        run: npm ci --prefix mcp
+
+      - name: Typecheck MCP
+        run: npx tsc --noEmit -p mcp/tsconfig.json
+
+      - name: Shellcheck scripts (bash -n)
+        run: |
+          shopt -s nullglob
+          for f in scripts/*.sh; do
+            echo "checking $f"
+            bash -n "$f"
+          done
+
+      - name: Run tests (28 tests)
+        run: npm test
+
+      - name: Stdio smoke — GITHUB_WORKSPACE
+        run: bash examples/stdio-smoke.sh --workdir "$GITHUB_WORKSPACE"
+
+      - name: Stdio smoke — path with spaces
+        run: bash examples/stdio-smoke.sh --workdir "/tmp/with spaces/ci smoke"
+
+      - name: MCP client — GITHUB_WORKSPACE
+        run: node examples/mcp-client.js --workdir "$GITHUB_WORKSPACE"
+
+      - name: MCP client — path with spaces
+        run: node examples/mcp-client.js --workdir "/tmp/with spaces/ci smoke"
+
+      # Manual gate for archive/release requiring admin — do not automate secrets.GITHUB_TOKEN archive:
+      # To archive legacies or create a GitHub Release after canonical is verified live:
+      #   gh repo archive SriChandraSekharA/anvil-review-loop  # requires admin
+      #   gh repo archive SriChandraSekharA/qodo-standard-review  # requires admin
+      #   gh release create v1.0.0 --title "v1.0.0" --notes "see CHANGELOG"  # requires contents:write + admin
+      # These are intentionally NOT in CI; run manually after skills.sh propagation confirmed.
